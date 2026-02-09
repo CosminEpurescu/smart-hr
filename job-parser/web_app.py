@@ -9,6 +9,9 @@ from datetime import datetime
 
 from flask import Flask, render_template, request, jsonify, session
 
+import vertexai
+from vertexai.generative_models import GenerativeModel, GenerationConfig
+
 from cv_matcher import (
     CVJobMatchingPipeline,
     FileJobStore,
@@ -99,6 +102,16 @@ def api_match():
     # Get top_n parameter
     top_n = int(request.form.get("top_n", 5))
     
+    # Get optional salary range from HR
+    hr_salary_min = request.form.get("salary_min")
+    hr_salary_max = request.form.get("salary_max")
+    hr_salary_range = None
+    if hr_salary_min or hr_salary_max:
+        hr_salary_range = {
+            "min": int(hr_salary_min) if hr_salary_min else None,
+            "max": int(hr_salary_max) if hr_salary_max else None,
+        }
+    
     # Save file temporarily and extract text
     try:
         suffix = Path(cv_file.filename).suffix.lower()
@@ -130,6 +143,9 @@ def api_match():
             applied_job_id=job_id,
             top_n=top_n,
         )
+        
+        # Store HR salary range in result for interview questions
+        result["hr_salary_range"] = hr_salary_range
         
         # Add job URLs to results
         if result.get("applied_job") and result["applied_job"].get("match"):
@@ -190,6 +206,115 @@ def api_analytics():
     }
     
     return jsonify(summary)
+
+
+@app.route("/api/interview-questions", methods=["POST"])
+def api_interview_questions():
+    """Generate interview questions based on CV and job matches."""
+    try:
+        data = request.get_json()
+        
+        cv_profile = data.get("cv_profile", {})
+        applied_job = data.get("applied_job", {})
+        alternative_jobs = data.get("alternative_jobs", [])[:3]  # Top 3 alternatives
+        hr_salary_range = data.get("hr_salary_range")
+        
+        # Initialize Vertex AI
+        vertexai.init(project="ai-deniers-486907", location="us-central1")
+        model = GenerativeModel(
+            model_name="gemini-2.0-flash-001",
+            generation_config=GenerationConfig(
+                temperature=0.7,
+                max_output_tokens=4096,
+            )
+        )
+        
+        # Build salary context
+        salary_context = ""
+        if hr_salary_range:
+            salary_context = f"\nHR Budget Range: {hr_salary_range.get('min', 'N/A')} - {hr_salary_range.get('max', 'N/A')} EUR"
+        if cv_profile.get("desired_salary"):
+            sal = cv_profile["desired_salary"]
+            salary_context += f"\nCandidate Expectation: {sal.get('min', 'N/A')} - {sal.get('max', 'N/A')} {sal.get('currency', 'EUR')}"
+        
+        # Build prompt
+        prompt = f"""You are an expert HR interviewer at ING Bank. Generate interview questions and suggested answers for a candidate.
+
+CANDIDATE PROFILE:
+- Name: {cv_profile.get('name', 'Unknown')}
+- Years of Experience: {cv_profile.get('years_of_experience', 'Unknown')}
+- Skills: {', '.join(cv_profile.get('skills', [])[:15])}
+- Soft Skills: {', '.join(cv_profile.get('soft_skills', []))}
+- Languages: {', '.join(cv_profile.get('languages', []))}
+- Location: {cv_profile.get('location', 'Unknown')}{salary_context}
+
+APPLIED JOB:
+- Title: {applied_job.get('job_title', 'Unknown')}
+- Match Score: {applied_job.get('match', {}).get('match_score', 'N/A')}/100
+- Matching Skills: {', '.join(applied_job.get('match', {}).get('matching_skills', []))}
+- Missing Skills: {', '.join(applied_job.get('match', {}).get('missing_skills', []))}
+
+TOP ALTERNATIVE JOBS (better fits):
+{chr(10).join([f"- {j.get('job_title', 'Unknown')} (Score: {j.get('match_score', 'N/A')})" for j in alternative_jobs])}
+
+Generate interview questions in these categories. For each question, provide a suggested ideal answer based on the candidate's profile.
+Output MUST be valid JSON only.
+
+{{
+    "technical_questions": [
+        {{
+            "question": "string",
+            "purpose": "What this question assesses",
+            "ideal_answer": "Suggested answer based on candidate profile",
+            "follow_up": "Optional follow-up question"
+        }}
+    ],
+    "behavioral_questions": [
+        {{
+            "question": "string",
+            "purpose": "string",
+            "ideal_answer": "string",
+            "follow_up": "string"
+        }}
+    ],
+    "skill_gap_questions": [
+        {{
+            "question": "string",
+            "skill": "The missing skill being addressed",
+            "purpose": "string",
+            "what_to_look_for": "What would indicate candidate can learn this"
+        }}
+    ],
+    "career_fit_questions": [
+        {{
+            "question": "string",
+            "purpose": "string",
+            "red_flags": "What answers might be concerning",
+            "green_flags": "What answers would be positive"
+        }}
+    ],
+    "salary_negotiation": {{
+        "suggested_talking_points": ["string"],
+        "market_context": "Brief context about the role and compensation"
+    }}
+}}
+
+Generate 3 questions per category."""
+        
+        response = model.generate_content(prompt)
+        response_text = response.text.strip()
+        
+        # Clean up response
+        if "```" in response_text:
+            lines = response_text.split("\n")
+            lines = [l for l in lines if not l.strip().startswith("```")]
+            response_text = "\n".join(lines)
+        
+        questions = json.loads(response_text)
+        return jsonify(questions)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":

@@ -550,6 +550,172 @@
         .score-badge.medium { background: #fff3cd; color: #856404; }
         .score-badge.low { background: #f8d7da; color: #721c24; }
         
+        /* Salary range inputs */
+        .salary-range-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .salary-input-wrapper {
+            flex: 1;
+        }
+        
+        .salary-input-wrapper label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .salary-input-wrapper input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        
+        .salary-input-wrapper input:focus {
+            outline: none;
+            border-color: var(--ing-orange);
+        }
+        
+        .optional-badge {
+            background: #f0f0f0;
+            color: #666;
+            font-size: 0.75em;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 8px;
+        }
+        
+        /* Interview Questions Tab */
+        .interview-section {
+            display: none;
+        }
+        
+        .interview-section.show {
+            display: block;
+        }
+        
+        .question-category {
+            margin-bottom: 25px;
+        }
+        
+        .category-header {
+            background: linear-gradient(135deg, var(--ing-orange) 0%, var(--ing-orange-dark) 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px 10px 0 0;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+        
+        .question-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            padding: 20px;
+            margin-bottom: 0;
+        }
+        
+        .question-card:last-child {
+            border-radius: 0 0 10px 10px;
+        }
+        
+        .question-text {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: var(--ing-dark);
+            margin-bottom: 10px;
+        }
+        
+        .question-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .meta-tag {
+            font-size: 0.8em;
+            padding: 4px 10px;
+            border-radius: 15px;
+        }
+        
+        .meta-purpose { background: #e3f2fd; color: #1565c0; }
+        .meta-skill { background: #fff3e0; color: #e65100; }
+        .meta-green { background: #e8f5e9; color: #2e7d32; }
+        .meta-red { background: #fce4ec; color: #c62828; }
+        
+        .answer-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid var(--ing-green);
+        }
+        
+        .answer-section h4 {
+            color: var(--ing-green);
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+        
+        .answer-section p {
+            color: #555;
+            line-height: 1.6;
+        }
+        
+        .follow-up {
+            margin-top: 10px;
+            padding: 10px;
+            background: #fff8e1;
+            border-radius: 6px;
+            font-size: 0.9em;
+        }
+        
+        .follow-up strong {
+            color: #f57c00;
+        }
+        
+        .salary-negotiation-card {
+            background: linear-gradient(135deg, #FFF8F5 0%, #fff 100%);
+            border: 2px solid var(--ing-orange);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        .talking-points {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .talking-points li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .talking-points li:before {
+            content: '💡';
+            position: absolute;
+            left: 0;
+        }
+        
+        .talking-points li:last-child {
+            border-bottom: none;
+        }
+        
+        .generate-questions-btn {
+            background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
+            margin-top: 20px;
+        }
+        
+        .generate-questions-btn:hover {
+            box-shadow: 0 5px 20px rgba(156, 39, 176, 0.4);
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
             .score-container {
@@ -591,6 +757,7 @@
         <!-- Tabs -->
         <div class="tabs">
             <button class="tab-btn active" onclick="showTab('matcher')">🎯 CV Matcher</button>
+            <button class="tab-btn" onclick="showTab('interview')">🎤 Interview Prep</button>
             <button class="tab-btn" onclick="showTab('analytics')">📊 Analytics</button>
         </div>
         
@@ -626,7 +793,21 @@
                     </div>
                     
                     <div class="form-group">
-                        <label>🔢 Number of Alternative Jobs</label>
+                        <label>� Job Salary Budget <span class="optional-badge">Optional</span></label>
+                        <div class="salary-range-group">
+                            <div class="salary-input-wrapper">
+                                <label>Min (EUR/year)</label>
+                                <input type="number" id="salary-min" name="salary_min" placeholder="e.g. 45000">
+                            </div>
+                            <div class="salary-input-wrapper">
+                                <label>Max (EUR/year)</label>
+                                <input type="number" id="salary-max" name="salary_max" placeholder="e.g. 65000">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>�🔢 Number of Alternative Jobs</label>
                         <div class="top-n-selector">
                             <input type="number" id="top-n" name="top_n" value="5" min="1" max="20">
                             <span>alternative job matches to show</span>
@@ -702,6 +883,37 @@
             </div>
         </div>
         
+        <!-- Interview Questions Tab -->
+        <div id="interview-tab" class="tab-content">
+            <div class="card">
+                <h2 style="margin-bottom: 20px; color: var(--ing-dark);">🎤 Interview Preparation Guide</h2>
+                <p style="color: #666; margin-bottom: 20px;">Generate tailored interview questions based on the CV analysis. Run a CV match first, then generate questions.</p>
+                
+                <div class="interview-section" id="interview-placeholder">
+                    <div style="text-align: center; padding: 40px; background: #f8f9fa; border-radius: 12px;">
+                        <div style="font-size: 48px; margin-bottom: 15px;">🎯</div>
+                        <h3 style="color: var(--ing-dark); margin-bottom: 10px;">No CV Analysis Yet</h3>
+                        <p style="color: #666;">Go to the CV Matcher tab, analyze a CV, then come back here to generate interview questions.</p>
+                    </div>
+                </div>
+                
+                <div class="interview-section" id="interview-ready" style="display: none;">
+                    <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <strong style="color: #2e7d32;">✅ CV Analysis Ready:</strong>
+                        <span id="interview-candidate-name"></span> applying for <span id="interview-job-title"></span>
+                    </div>
+                    <button class="btn generate-questions-btn" id="generate-questions-btn" onclick="generateInterviewQuestions()">
+                        🎤 Generate Interview Questions
+                    </button>
+                    <div class="spinner" id="interview-spinner" style="display: none;"></div>
+                </div>
+                
+                <div class="interview-section" id="interview-results" style="display: none;">
+                    <div id="interview-questions-content"></div>
+                </div>
+            </div>
+        </div>
+        
         <!-- Analytics Tab -->
         <div id="analytics-tab" class="tab-content">
             <div class="analytics-grid">
@@ -752,6 +964,9 @@
     </div>
     
     <script>
+        // Store last match result for interview questions
+        let lastMatchResult = null;
+        
         // Tab functionality
         function showTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -763,6 +978,180 @@
             if (tabName === 'analytics') {
                 loadAnalytics();
             }
+            
+            if (tabName === 'interview') {
+                updateInterviewTab();
+            }
+        }
+        
+        function updateInterviewTab() {
+            if (lastMatchResult) {
+                document.getElementById('interview-placeholder').style.display = 'none';
+                document.getElementById('interview-ready').style.display = 'block';
+                document.getElementById('interview-candidate-name').textContent = lastMatchResult.cv_profile.name;
+                document.getElementById('interview-job-title').textContent = lastMatchResult.applied_job.job_title;
+            } else {
+                document.getElementById('interview-placeholder').style.display = 'block';
+                document.getElementById('interview-ready').style.display = 'none';
+                document.getElementById('interview-results').style.display = 'none';
+            }
+        }
+        
+        async function generateInterviewQuestions() {
+            if (!lastMatchResult) return;
+            
+            const btn = document.getElementById('generate-questions-btn');
+            const spinner = document.getElementById('interview-spinner');
+            
+            btn.style.display = 'none';
+            spinner.style.display = 'block';
+            
+            try {
+                const response = await fetch('/api/interview-questions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        cv_profile: lastMatchResult.cv_profile,
+                        applied_job: lastMatchResult.applied_job,
+                        alternative_jobs: lastMatchResult.alternative_jobs,
+                        hr_salary_range: lastMatchResult.hr_salary_range
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to generate questions');
+                }
+                
+                displayInterviewQuestions(data);
+                
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                btn.style.display = 'block';
+                spinner.style.display = 'none';
+            }
+        }
+        
+        function displayInterviewQuestions(data) {
+            document.getElementById('interview-results').style.display = 'block';
+            
+            let html = '';
+            
+            // Technical Questions
+            if (data.technical_questions?.length) {
+                html += `
+                    <div class="question-category">
+                        <div class="category-header">💻 Technical Questions</div>
+                        ${data.technical_questions.map(q => `
+                            <div class="question-card">
+                                <div class="question-text">${q.question}</div>
+                                <div class="question-meta">
+                                    <span class="meta-tag meta-purpose">🎯 ${q.purpose}</span>
+                                </div>
+                                <div class="answer-section">
+                                    <h4>✅ Ideal Answer</h4>
+                                    <p>${q.ideal_answer}</p>
+                                </div>
+                                ${q.follow_up ? `<div class="follow-up"><strong>Follow-up:</strong> ${q.follow_up}</div>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            // Behavioral Questions
+            if (data.behavioral_questions?.length) {
+                html += `
+                    <div class="question-category">
+                        <div class="category-header" style="background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);">🧠 Behavioral Questions</div>
+                        ${data.behavioral_questions.map(q => `
+                            <div class="question-card">
+                                <div class="question-text">${q.question}</div>
+                                <div class="question-meta">
+                                    <span class="meta-tag meta-purpose">🎯 ${q.purpose}</span>
+                                </div>
+                                <div class="answer-section">
+                                    <h4>✅ Ideal Answer</h4>
+                                    <p>${q.ideal_answer}</p>
+                                </div>
+                                ${q.follow_up ? `<div class="follow-up"><strong>Follow-up:</strong> ${q.follow_up}</div>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            // Skill Gap Questions
+            if (data.skill_gap_questions?.length) {
+                html += `
+                    <div class="question-category">
+                        <div class="category-header" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);">🚧 Skill Gap Questions</div>
+                        ${data.skill_gap_questions.map(q => `
+                            <div class="question-card">
+                                <div class="question-text">${q.question}</div>
+                                <div class="question-meta">
+                                    <span class="meta-tag meta-skill">🛠️ ${q.skill}</span>
+                                    <span class="meta-tag meta-purpose">🎯 ${q.purpose}</span>
+                                </div>
+                                <div class="answer-section">
+                                    <h4>🔍 What to Look For</h4>
+                                    <p>${q.what_to_look_for}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            // Career Fit Questions
+            if (data.career_fit_questions?.length) {
+                html += `
+                    <div class="question-category">
+                        <div class="category-header" style="background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);">🎯 Career Fit Questions</div>
+                        ${data.career_fit_questions.map(q => `
+                            <div class="question-card">
+                                <div class="question-text">${q.question}</div>
+                                <div class="question-meta">
+                                    <span class="meta-tag meta-purpose">🎯 ${q.purpose}</span>
+                                </div>
+                                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                                    <div style="flex: 1; min-width: 200px; background: #e8f5e9; padding: 12px; border-radius: 8px;">
+                                        <strong style="color: #2e7d32;">✅ Green Flags</strong>
+                                        <p style="margin-top: 5px; font-size: 0.9em;">${q.green_flags}</p>
+                                    </div>
+                                    <div style="flex: 1; min-width: 200px; background: #ffebee; padding: 12px; border-radius: 8px;">
+                                        <strong style="color: #c62828;">⚠️ Red Flags</strong>
+                                        <p style="margin-top: 5px; font-size: 0.9em;">${q.red_flags}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            // Salary Negotiation
+            if (data.salary_negotiation) {
+                html += `
+                    <div class="question-category">
+                        <div class="category-header" style="background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);">💰 Salary Negotiation Tips</div>
+                        <div class="salary-negotiation-card">
+                            <h4 style="color: var(--ing-dark); margin-bottom: 15px;">💡 Suggested Talking Points</h4>
+                            <ul class="talking-points">
+                                ${data.salary_negotiation.suggested_talking_points.map(p => `<li>${p}</li>`).join('')}
+                            </ul>
+                            <div style="margin-top: 15px; padding: 12px; background: #f0f0f0; border-radius: 8px;">
+                                <strong>📊 Market Context:</strong>
+                                <p style="margin-top: 5px; color: #555;">${data.salary_negotiation.market_context}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('interview-questions-content').innerHTML = html;
         }
         
         // Chart instances
@@ -1053,6 +1442,12 @@
             formData.append('job_id', jobSelect.value);
             formData.append('top_n', document.getElementById('top-n').value);
             
+            // Add optional salary range
+            const salaryMin = document.getElementById('salary-min').value;
+            const salaryMax = document.getElementById('salary-max').value;
+            if (salaryMin) formData.append('salary_min', salaryMin);
+            if (salaryMax) formData.append('salary_max', salaryMax);
+            
             try {
                 const response = await fetch('/api/match', {
                     method: 'POST',
@@ -1064,6 +1459,9 @@
                 if (!response.ok) {
                     throw new Error(data.error || 'An error occurred');
                 }
+                
+                // Store result for interview questions
+                lastMatchResult = data;
                 
                 displayResults(data);
                 
