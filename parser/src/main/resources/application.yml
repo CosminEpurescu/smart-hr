@@ -1,0 +1,13 @@
+# Scraper Configuration
+scraper:
+  headless: true
+  page-load-timeout: 30
+  implicit-wait: 2
+  request-delay: 1000
+
+# Logging
+logging:
+  level:
+    com.ing.parser: INFO
+    org.openqa.selenium: WARN
+    io.github.bonigarcia: INFO
