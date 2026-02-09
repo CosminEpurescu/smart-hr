@@ -49,9 +49,12 @@ class JobMatch:
     job_id: str
     job_title: str
     location: dict
-    match_score: float  # 0-100
+    match_score: float  # 0-100 (weighted overall score)
     skill_match: float  # 0-100
     experience_match: float  # 0-100
+    location_match: float  # 0-100 (region/relocation compatibility)
+    language_match: float  # 0-100 (required languages vs candidate languages)
+    salary_match: float  # 0-100 (salary expectations alignment)
     matching_skills: list[str]
     missing_skills: list[str]
     reasoning: str
@@ -321,29 +324,42 @@ class JobMatcher:
     ) -> list[JobMatch]:
         """Match a CV profile against multiple jobs and return top N matches."""
         
+        # Format salary expectations
+        salary_info = "Not specified"
+        if cv_profile.desired_salary:
+            sal = cv_profile.desired_salary
+            salary_info = f"{sal.get('min', 'N/A')}-{sal.get('max', 'N/A')} {sal.get('currency', '')}"
+        
         prompt = f"""You are an expert HR recruiter. Analyze how well this candidate matches each job posting.
+Consider ALL factors including location compatibility, language requirements, and salary alignment.
 
 CANDIDATE PROFILE:
 - Name: {cv_profile.name}
 - Summary: {cv_profile.summary}
 - Years of Experience: {cv_profile.years_of_experience or 'Unknown'}
-- Location: {cv_profile.location or 'Unknown'}
+- Current Location: {cv_profile.location or 'Unknown'}
 - Technical Skills: {', '.join(cv_profile.skills)}
 - Soft Skills: {', '.join(cv_profile.soft_skills)}
-- Languages: {', '.join(cv_profile.languages)}
+- Languages Spoken: {', '.join(cv_profile.languages) if cv_profile.languages else 'Not specified'}
 - Education: {json.dumps(cv_profile.education)}
 - Work Experience: {json.dumps(cv_profile.work_experience)}
 - Certifications: {', '.join(cv_profile.certifications)}
+- Salary Expectations: {salary_info}
 
 {"IMPORTANT: The candidate has APPLIED for job ID: " + applied_job_id + ". Make sure to include this job in the results and flag it." if applied_job_id else ""}
 
-For each job, calculate:
-1. match_score (0-100): Overall match considering skills, experience, and fit
-2. skill_match (0-100): How well technical skills align
-3. experience_match (0-100): How well experience level matches
-4. matching_skills: List of candidate skills that match the job
-5. missing_skills: Important skills the candidate lacks for this job
-6. reasoning: Brief explanation of the match (2-3 sentences)
+For each job, calculate these scores (0-100):
+1. skill_match: How well technical and soft skills align with job requirements
+2. experience_match: How well experience level and background match
+3. location_match: Regional compatibility (100 if same country/region, 80 if same continent with remote option, 60 if remote-friendly, 40 if relocation required, 20 if incompatible)
+4. language_match: How well candidate's languages match job/region requirements (100 if all required languages known, reduce for missing languages)
+5. salary_match: Alignment between candidate expectations and job salary (100 if within range or no constraints, reduce if mismatch)
+6. match_score: WEIGHTED OVERALL - calculate as: (skill_match * 0.35) + (experience_match * 0.25) + (location_match * 0.15) + (language_match * 0.15) + (salary_match * 0.10)
+
+Also provide:
+- matching_skills: List of candidate skills that match the job
+- missing_skills: Important skills the candidate lacks
+- reasoning: Brief explanation covering skills, location fit, language requirements, and salary (2-3 sentences)
 
 Output MUST be valid JSON only - an array of job matches sorted by match_score descending.
 Return the top {top_n} matches.
@@ -357,6 +373,9 @@ Output format:
         "match_score": number,
         "skill_match": number,
         "experience_match": number,
+        "location_match": number,
+        "language_match": number,
+        "salary_match": number,
         "matching_skills": ["string"],
         "missing_skills": ["string"],
         "reasoning": "string",
@@ -371,6 +390,7 @@ JOB POSTINGS:
             f"Job ID: {job.get('job_id')}\n"
             f"Title: {job.get('job_title')}\n"
             f"Location: {json.dumps(job.get('location', {}))}\n"
+            f"Salary Range: {job.get('salary') or 'Not specified'}\n"
             f"Description: {job.get('description', 'N/A')}\n"
             f"Required Skills: {', '.join(job.get('skills', []))}\n"
             f"Soft Skills: {', '.join(job.get('soft_skills', []))}\n"

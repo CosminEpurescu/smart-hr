@@ -1,11 +1,13 @@
 """
 Web interface for CV to Job Matcher
 """
+import json
 import os
 import tempfile
 from pathlib import Path
+from datetime import datetime
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session
 
 from cv_matcher import (
     CVJobMatchingPipeline,
@@ -15,10 +17,35 @@ from cv_matcher import (
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.secret_key = 'ing-smart-hr-2026'
 
 # Initialize job store
 JOBS_DIR = Path(__file__).parent / "jobs_extracted"
+JOBS_DETAILED_DIR = Path(__file__).parent / "jobs_detailed"
 job_store = FileJobStore(str(JOBS_DIR))
+
+# Store analytics data in memory (in production, use a database)
+analytics_data = {
+    "searches": [],
+    "skill_frequency": {},
+    "location_distribution": {},
+    "match_scores": [],
+}
+
+
+def get_job_url(job_id: str) -> str:
+    """Get the URL for a job from the detailed jobs directory."""
+    # Try to find the detailed job file
+    for json_file in JOBS_DETAILED_DIR.glob(f"{job_id}_*.json"):
+        try:
+            with open(json_file, "r", encoding="utf-8") as f:
+                job_data = json.load(f)
+                if job_data.get("url"):
+                    return job_data["url"]
+        except:
+            pass
+    # Fallback: construct a search URL
+    return f"https://careers.ing.com/en/search-jobs/{job_id}"
 
 
 def get_all_jobs_for_dropdown():
@@ -29,6 +56,7 @@ def get_all_jobs_for_dropdown():
             "job_id": job.get("job_id", ""),
             "job_title": job.get("job_title", "Unknown Title"),
             "location": job.get("location", {}),
+            "url": get_job_url(job.get("job_id", "")),
         }
         for job in jobs
         if job.get("job_id")
@@ -103,12 +131,65 @@ def api_match():
             top_n=top_n,
         )
         
+        # Add job URLs to results
+        if result.get("applied_job") and result["applied_job"].get("match"):
+            result["applied_job"]["match"]["url"] = get_job_url(job_id)
+        
+        for alt_job in result.get("alternative_jobs", []):
+            alt_job["url"] = get_job_url(alt_job.get("job_id", ""))
+        
+        # Update analytics
+        analytics_data["searches"].append({
+            "timestamp": datetime.now().isoformat(),
+            "candidate_name": result.get("cv_profile", {}).get("name", "Unknown"),
+            "applied_job_id": job_id,
+            "applied_job_score": result.get("applied_job", {}).get("match", {}).get("match_score", 0),
+            "top_alternative_score": result.get("alternative_jobs", [{}])[0].get("match_score", 0) if result.get("alternative_jobs") else 0,
+        })
+        
+        # Track skill frequency
+        for skill in result.get("cv_profile", {}).get("skills", []):
+            analytics_data["skill_frequency"][skill] = analytics_data["skill_frequency"].get(skill, 0) + 1
+        
+        # Track location distribution
+        location = result.get("cv_profile", {}).get("location", "Unknown")
+        analytics_data["location_distribution"][location] = analytics_data["location_distribution"].get(location, 0) + 1
+        
+        # Track match scores
+        if result.get("applied_job", {}).get("match"):
+            analytics_data["match_scores"].append(result["applied_job"]["match"]["match_score"])
+        
         return jsonify(result)
         
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         return jsonify({"error": f"Processing error: {str(e)}"}), 500
+
+
+@app.route("/api/analytics")
+def api_analytics():
+    """API endpoint to get analytics data."""
+    # Calculate summary statistics
+    searches = analytics_data["searches"]
+    match_scores = analytics_data["match_scores"]
+    
+    summary = {
+        "total_searches": len(searches),
+        "avg_applied_score": sum(s.get("applied_job_score", 0) for s in searches) / len(searches) if searches else 0,
+        "avg_top_alternative_score": sum(s.get("top_alternative_score", 0) for s in searches) / len(searches) if searches else 0,
+        "score_distribution": {
+            "excellent": len([s for s in match_scores if s >= 80]),
+            "good": len([s for s in match_scores if 60 <= s < 80]),
+            "fair": len([s for s in match_scores if 40 <= s < 60]),
+            "poor": len([s for s in match_scores if s < 40]),
+        },
+        "top_skills": sorted(analytics_data["skill_frequency"].items(), key=lambda x: x[1], reverse=True)[:15],
+        "location_distribution": analytics_data["location_distribution"],
+        "recent_searches": searches[-10:][::-1],  # Last 10, newest first
+    }
+    
+    return jsonify(summary)
 
 
 if __name__ == "__main__":
