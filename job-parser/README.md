@@ -67,10 +67,10 @@ Open **http://localhost:5001** in your browser.
 
 ```bash
 # Navigate to the project
-cd /Users/MS67KS/Documents/projects/hackathon/day1/smart-hr/job-parser
+cd /Users/your-user/Documents/projects/hackathon/day1/smart-hr/job-parser
 
 # Set credentials (REQUIRED)
-export GOOGLE_APPLICATION_CREDENTIALS=/Users/MS67KS/Downloads/ai-deniers-486907-d7a6d05195f3.json
+export GOOGLE_APPLICATION_CREDENTIALS=/Users/your-user/Downloads/ai-deniers-486907-d7a6d05195f3.json
 
 # Install dependencies
 uv sync
@@ -419,8 +419,8 @@ job-parser/
 ```bash
 # Full restart command (kill + start)
 pkill -f "python.*web_app" 2>/dev/null; \
-cd /Users/MS67KS/Documents/projects/hackathon/day1/smart-hr/job-parser && \
-export GOOGLE_APPLICATION_CREDENTIALS=/Users/MS67KS/Downloads/ai-deniers-486907-d7a6d05195f3.json && \
+cd /Users/your-user/Documents/projects/hackathon/day1/smart-hr/job-parser && \
+export GOOGLE_APPLICATION_CREDENTIALS=/Users/your-user/Downloads/ai-deniers-486907-d7a6d05195f3.json && \
 .venv/bin/python web_app.py
 ```
 
