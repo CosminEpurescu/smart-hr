@@ -66,6 +66,22 @@
             <artifactId>google-cloud-dialogflow-cx</artifactId>
             <version>0.49.0</version>
         </dependency>
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aspects</artifactId>
+        </dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>
@@ -105,6 +121,45 @@
                     </excludes>
                 </configuration>
             </plugin>
+
+            <!-- OpenAPI definitions -->
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>7.14.0</version>
+                <executions>
+                    <execution>
+                        <id>SmartHR</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <generatorName>spring</generatorName>
+                            <inputSpec>${project.basedir}/src/main/resources/openapi/SmartHR-producer.yaml</inputSpec>
+                            <enablePostProcessFile>true</enablePostProcessFile>
+                            <library>spring-boot</library>
+                            <configOptions>
+                                <additionalModelTypeAnnotations>
+                                    @lombok.Builder
+                                    @lombok.AllArgsConstructor
+                                    @lombok.NoArgsConstructor
+                                </additionalModelTypeAnnotations>
+                                <interfaceOnly>true</interfaceOnly>
+                                <apiPackage>com.ing.smarthr.producer.api</apiPackage>
+                                <modelPackage>com.ing.smarthr.producer.model</modelPackage>
+                                <generatedConstructorWithRequiredArgs>false
+                                </generatedConstructorWithRequiredArgs> <!-- Set this to false since it interferes with Lombok -->
+                                <unhandledException>false</unhandledException>
+                                <useSpringBoot3>true</useSpringBoot3>
+                                <useTags>true</useTags>
+                                <openApiNullable>false</openApiNullable>
+                                <documentationProvider>none</documentationProvider>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
 
