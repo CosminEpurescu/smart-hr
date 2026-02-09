@@ -2,7 +2,12 @@ spring:
   application:
     name: backend
   ai:
-    google:
-      genai:
-        project-id: "ai-deniers-486907"
-        location: "us-central1"
+    vertex:
+      ai:
+        gemini:
+          project-id: ai-deniers-486907
+          location: us-central1
+          chat:
+            options:
+              model: gemini-2.0-flash
+              temperature: 0.7

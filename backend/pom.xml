@@ -38,7 +38,7 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-starter-model-google-genai</artifactId>
+            <artifactId>spring-ai-starter-model-vertex-ai-gemini</artifactId>
         </dependency>
 
         <dependency>
@@ -55,6 +55,16 @@
             <groupId>com.google.cloud</groupId>
             <artifactId>google-cloud-aiplatform</artifactId>
             <version>3.84.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-vertexai</artifactId>
+            <version>1.14.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-dialogflow-cx</artifactId>
+            <version>0.49.0</version>
         </dependency>
     </dependencies>
     <dependencyManagement>

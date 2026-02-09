@@ -1,0 +1,65 @@
+# Sample CV for Testing
+
+## John Doe
+Email: john.doe@example.com
+Phone: +1 555-123-4567
+Location: Amsterdam, Netherlands
+
+## Professional Summary
+Experienced software engineer with 7 years of experience in backend development, specializing in Java, Python, and cloud technologies. Strong background in financial services and banking applications.
+
+## Work Experience
+
+### Senior Software Engineer
+**ING Bank** | Amsterdam, Netherlands | 2021 - Present
+- Developed and maintained microservices using Java Spring Boot
+- Implemented CI/CD pipelines using Jenkins and GitLab
+- Led a team of 5 developers on a payment processing system
+- Migrated legacy systems to cloud infrastructure (Google Cloud Platform)
+- Worked with Kubernetes and Docker for containerization
+
+### Software Engineer
+**ABN AMRO** | Amsterdam, Netherlands | 2018 - 2021
+- Built REST APIs for mobile banking applications
+- Developed batch processing systems using Python
+- Implemented security features following PCI-DSS standards
+- Collaborated with risk management teams on fraud detection systems
+
+### Junior Developer
+**Accenture** | Rotterdam, Netherlands | 2016 - 2018
+- Developed web applications using Java and JavaScript
+- Participated in Agile/Scrum development processes
+- Created unit tests and integration tests
+
+## Education
+
+### Master of Science in Computer Science
+**TU Delft** | 2014 - 2016
+
+### Bachelor of Science in Information Technology
+**University of Amsterdam** | 2010 - 2014
+
+## Technical Skills
+- Languages: Java, Python, JavaScript, SQL, Kotlin
+- Frameworks: Spring Boot, Django, React, Node.js
+- Databases: PostgreSQL, MongoDB, Redis, Oracle
+- Cloud: Google Cloud Platform (GCP), AWS
+- DevOps: Docker, Kubernetes, Jenkins, GitLab CI, Terraform
+- Tools: Git, Jira, Confluence, IntelliJ IDEA
+
+## Soft Skills
+- Team Leadership
+- Problem Solving
+- Communication
+- Agile/Scrum
+- Mentoring
+
+## Languages
+- English (Fluent)
+- Dutch (Fluent)
+- German (Intermediate)
+
+## Certifications
+- Google Cloud Professional Cloud Architect (2023)
+- AWS Solutions Architect Associate (2022)
+- Oracle Certified Java Programmer (2019)

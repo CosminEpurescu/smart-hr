@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV Job Matcher</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 1.1em;
+        }
+        
+        /* Drag and drop area */
+        .drop-zone {
+            border: 3px dashed #667eea;
+            border-radius: 12px;
+            padding: 60px 20px;
+            text-align: center;
+            background: #f8f9ff;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .drop-zone:hover, .drop-zone.drag-over {
+            background: #eef0ff;
+            border-color: #764ba2;
+            transform: scale(1.01);
+        }
+        
+        .drop-zone.has-file {
+            border-color: #28a745;
+            background: #f0fff4;
+        }
+        
+        .drop-zone-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .drop-zone-text {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .drop-zone-text strong {
+            color: #667eea;
+        }
+        
+        .file-name {
+            margin-top: 15px;
+            font-weight: 600;
+            color: #28a745;
+        }
+        
+        #cv-input {
+            display: none;
+        }
+        
+        /* Select dropdown */
+        select {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        /* Button */
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            font-size: 1.2em;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Results section */
+        .results {
+            display: none;
+        }
+        
+        .results.show {
+            display: block;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .result-header h2 {
+            color: #333;
+        }
+        
+        .candidate-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+        
+        .candidate-name {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .skills-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .skill-tag {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+        }
+        
+        /* Applied job section */
+        .applied-job {
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, #f8f9ff 0%, #fff 100%);
+        }
+        
+        .applied-job-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .applied-badge {
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        
+        .job-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .job-location {
+            color: #666;
+            font-size: 0.95em;
+        }
+        
+        /* Score display */
+        .score-container {
+            display: flex;
+            gap: 20px;
+            margin: 15px 0;
+        }
+        
+        .score-item {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .score-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 1.5em;
+            font-weight: 700;
+            color: white;
+        }
+        
+        .score-high { background: linear-gradient(135deg, #28a745, #20c997); }
+        .score-medium { background: linear-gradient(135deg, #ffc107, #fd7e14); }
+        .score-low { background: linear-gradient(135deg, #dc3545, #e83e8c); }
+        
+        .score-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .reasoning {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            color: #555;
+            line-height: 1.6;
+        }
+        
+        /* Alternative jobs */
+        .alternatives-header {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .alternative-job {
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .alternative-job:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .alternative-rank {
+            display: inline-block;
+            background: #f0f0f0;
+            color: #666;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            display: none;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading .spinner {
+            display: block;
+        }
+        
+        .loading .btn {
+            display: none;
+        }
+        
+        /* Error message */
+        .error {
+            background: #fff5f5;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #fc8181;
+            display: none;
+        }
+        
+        .error.show {
+            display: block;
+        }
+        
+        /* Top N selector */
+        .top-n-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .top-n-selector input {
+            width: 80px;
+            padding: 10px;
+            font-size: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .score-container {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 CV Job Matcher</h1>
+        
+        <div class="card">
+            <form id="match-form">
+                <div class="error" id="error-message"></div>
+                
+                <div class="form-group">
+                    <label>📄 Upload CV (PDF or TXT)</label>
+                    <div class="drop-zone" id="drop-zone">
+                        <div class="drop-zone-icon">📁</div>
+                        <div class="drop-zone-text">
+                            <strong>Drag & drop</strong> your CV here<br>
+                            or <strong>click to browse</strong>
+                        </div>
+                        <div class="file-name" id="file-name"></div>
+                    </div>
+                    <input type="file" id="cv-input" name="cv_file" accept=".pdf,.txt">
+                </div>
+                
+                <div class="form-group">
+                    <label>💼 Job Applied For</label>
+                    <select id="job-select" name="job_id" required>
+                        <option value="">-- Select a job posting --</option>
+                        {% for job in jobs %}
+                        <option value="{{ job.job_id }}">
+                            {{ job.job_title }} - {{ job.location.get('city', 'Unknown') }}, {{ job.location.get('country', '') }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>🔢 Number of Alternative Jobs</label>
+                    <div class="top-n-selector">
+                        <input type="number" id="top-n" name="top_n" value="5" min="1" max="20">
+                        <span>alternative job matches to show</span>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn" id="submit-btn">
+                    🚀 Analyze Match
+                </button>
+                <div class="spinner" id="spinner"></div>
+            </form>
+        </div>
+        
+        <div class="card results" id="results">
+            <div class="result-header">
+                <h2>📊 Match Results</h2>
+            </div>
+            
+            <div class="candidate-info" id="candidate-info">
+                <div class="candidate-name" id="candidate-name"></div>
+                <div>Experience: <span id="candidate-experience"></span></div>
+                <div>Skills:</div>
+                <div class="skills-list" id="candidate-skills"></div>
+            </div>
+            
+            <div class="applied-job" id="applied-job-section">
+                <div class="applied-job-header">
+                    <div>
+                        <div class="job-title" id="applied-job-title"></div>
+                        <div class="job-location" id="applied-job-location"></div>
+                    </div>
+                    <span class="applied-badge">APPLIED JOB</span>
+                </div>
+                
+                <div class="score-container">
+                    <div class="score-item">
+                        <div class="score-circle" id="applied-match-score"></div>
+                        <div class="score-label">Overall Match</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-circle" id="applied-skill-score"></div>
+                        <div class="score-label">Skill Match</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-circle" id="applied-exp-score"></div>
+                        <div class="score-label">Experience Match</div>
+                    </div>
+                </div>
+                
+                <div class="reasoning" id="applied-reasoning"></div>
+            </div>
+            
+            <h3 class="alternatives-header">🌟 Better-Fitting Alternatives</h3>
+            <div id="alternative-jobs"></div>
+        </div>
+    </div>
+    
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const cvInput = document.getElementById('cv-input');
+        const fileName = document.getElementById('file-name');
+        const form = document.getElementById('match-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const spinner = document.getElementById('spinner');
+        const results = document.getElementById('results');
+        const errorMessage = document.getElementById('error-message');
+        
+        // Drag and drop handlers
+        dropZone.addEventListener('click', () => cvInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+        
+        cvInput.addEventListener('change', () => {
+            if (cvInput.files.length > 0) {
+                handleFile(cvInput.files[0]);
+            }
+        });
+        
+        function handleFile(file) {
+            const validTypes = ['application/pdf', 'text/plain'];
+            const validExtensions = ['.pdf', '.txt'];
+            
+            const ext = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
+            if (!validExtensions.includes(ext)) {
+                showError('Please upload a PDF or TXT file');
+                return;
+            }
+            
+            // Create a new FileList-like object
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            cvInput.files = dataTransfer.files;
+            
+            fileName.textContent = `✅ ${file.name}`;
+            dropZone.classList.add('has-file');
+            hideError();
+        }
+        
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+        }
+        
+        function hideError() {
+            errorMessage.classList.remove('show');
+        }
+        
+        function getScoreClass(score) {
+            if (score >= 70) return 'score-high';
+            if (score >= 40) return 'score-medium';
+            return 'score-low';
+        }
+        
+        function displayResults(data) {
+            results.classList.add('show');
+            
+            // Candidate info
+            const profile = data.cv_profile;
+            document.getElementById('candidate-name').textContent = profile.name;
+            document.getElementById('candidate-experience').textContent = 
+                profile.years_of_experience ? `${profile.years_of_experience} years` : 'Not specified';
+            
+            const skillsContainer = document.getElementById('candidate-skills');
+            skillsContainer.innerHTML = profile.skills.slice(0, 15).map(skill => 
+                `<span class="skill-tag">${skill}</span>`
+            ).join('');
+            
+            // Applied job
+            if (data.applied_job && data.applied_job.match) {
+                const match = data.applied_job.match;
+                document.getElementById('applied-job-title').textContent = match.job_title;
+                document.getElementById('applied-job-location').textContent = 
+                    `${match.location?.city || 'Unknown'}, ${match.location?.country || ''}`;
+                
+                const matchScore = document.getElementById('applied-match-score');
+                matchScore.textContent = match.match_score;
+                matchScore.className = `score-circle ${getScoreClass(match.match_score)}`;
+                
+                const skillScore = document.getElementById('applied-skill-score');
+                skillScore.textContent = match.skill_match;
+                skillScore.className = `score-circle ${getScoreClass(match.skill_match)}`;
+                
+                const expScore = document.getElementById('applied-exp-score');
+                expScore.textContent = match.experience_match;
+                expScore.className = `score-circle ${getScoreClass(match.experience_match)}`;
+                
+                document.getElementById('applied-reasoning').textContent = match.reasoning;
+            }
+            
+            // Alternative jobs
+            const alternativesContainer = document.getElementById('alternative-jobs');
+            alternativesContainer.innerHTML = data.alternative_jobs.map((job, index) => `
+                <div class="alternative-job">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <span class="alternative-rank">${index + 1}</span>
+                            <span class="job-title" style="font-size: 1.1em;">${job.job_title}</span>
+                            <div class="job-location" style="margin-left: 40px; margin-top: 5px;">
+                                📍 ${job.location?.city || 'Unknown'}, ${job.location?.country || ''}
+                            </div>
+                        </div>
+                        <div class="score-circle ${getScoreClass(job.match_score)}" style="width: 60px; height: 60px; font-size: 1.2em;">
+                            ${job.match_score}
+                        </div>
+                    </div>
+                    <div class="reasoning" style="margin-top: 15px;">${job.reasoning}</div>
+                </div>
+            `).join('');
+            
+            // Scroll to results
+            results.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError();
+            
+            if (!cvInput.files.length) {
+                showError('Please upload a CV file');
+                return;
+            }
+            
+            const jobSelect = document.getElementById('job-select');
+            if (!jobSelect.value) {
+                showError('Please select a job posting');
+                return;
+            }
+            
+            // Show loading state
+            submitBtn.style.display = 'none';
+            spinner.style.display = 'block';
+            results.classList.remove('show');
+            
+            const formData = new FormData();
+            formData.append('cv_file', cvInput.files[0]);
+            formData.append('job_id', jobSelect.value);
+            formData.append('top_n', document.getElementById('top-n').value);
+            
+            try {
+                const response = await fetch('/api/match', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'An error occurred');
+                }
+                
+                displayResults(data);
+                
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                submitBtn.style.display = 'block';
+                spinner.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -10,4 +10,8 @@ dependencies = [
     "lxml>=5.0.0",
     "pandas>=2.0.0",
     "tqdm>=4.66.0",
+    "google-cloud-aiplatform>=1.70.0",
+    "pymongo>=4.6.0",
+    "pypdf>=4.0.0",
+    "flask>=3.0.0",
 ]
