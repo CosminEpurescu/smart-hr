@@ -20,6 +20,7 @@ class Job:
     city: Optional[str] = None
     country: Optional[str] = None
     locations: List[str] = field(default_factory=list)
+    locations_raw: Optional[str] = None  # Raw locations string from listing (e.g., "Polska, Katowice; Polska, Warszawa;")
     
     # Job details
     expertise: Optional[str] = None

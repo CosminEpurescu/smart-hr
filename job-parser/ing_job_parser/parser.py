@@ -144,12 +144,37 @@ class INGJobParser:
             city = None
             country = None
             locations = []
+            locations_raw = None
             expertise = None
             experience_level = None
             ing_entity = None
             
             if parent:
                 text_content = parent.get_text(separator=" ", strip=True)
+                
+                # Extract multiple locations (format: "Polska, Katowice; Polska, Warszawa;")
+                # Look for semicolon-separated location patterns
+                locations_match = re.search(r'([A-Za-zżółćęśąźńŻÓŁĆĘŚĄŹŃ]+,\s*[A-Za-zżółćęśąźńŻÓŁĆĘŚĄŹŃ-]+;\s*)+', text_content)
+                if locations_match:
+                    locations_raw = locations_match.group(0).strip()
+                    # Parse individual locations
+                    for loc in locations_raw.split(';'):
+                        loc = loc.strip()
+                        if loc and ',' in loc:
+                            locations.append(loc)
+                
+                # Also look for spans/elements that might contain location info
+                location_spans = parent.find_all(['span', 'div'], class_=re.compile(r'location|place|city', re.I))
+                for span in location_spans:
+                    loc_text = span.get_text(strip=True)
+                    if loc_text and loc_text not in locations:
+                        if ';' in loc_text:
+                            for loc in loc_text.split(';'):
+                                loc = loc.strip()
+                                if loc:
+                                    locations.append(loc)
+                        elif loc_text:
+                            locations.append(loc_text)
                 
                 # Extract city
                 city_patterns = [
@@ -158,7 +183,8 @@ class INGJobParser:
                     "Bucharest", "Luxembourg", "Dublin", "Frankfurt", "Barcelona", 
                     "Rotterdam", "Utrecht", "Katowice", "Krakow", "Poznan", "Wroclaw", 
                     "Lodz", "Manila", "Makati", "Cluj-Napoca", "Eindhoven", "Leuven",
-                    "New York", "Houston", "Zurich", "Hong Kong", "Seoul", "Taipei"
+                    "New York", "Houston", "Zurich", "Hong Kong", "Seoul", "Taipei",
+                    "Warszawa", "Kraków", "Poznań", "Wrocław", "Łódź"
                 ]
                 for city_name in city_patterns:
                     if city_name.lower() in text_content.lower():
@@ -167,7 +193,7 @@ class INGJobParser:
                 
                 # Extract country
                 country_patterns = [
-                    ("Poland", "Poland"), ("Netherlands", "Netherlands"), 
+                    ("Poland", "Poland"), ("Polska", "Poland"), ("Netherlands", "Netherlands"), 
                     ("Belgium", "Belgium"), ("Germany", "Germany"),
                     ("Spain", "Spain"), ("France", "France"), ("Italy", "Italy"),
                     ("United Kingdom", "United Kingdom"), ("UK", "United Kingdom"),
@@ -220,6 +246,7 @@ class INGJobParser:
                 city=city,
                 country=country,
                 locations=locations,
+                locations_raw=locations_raw,
                 expertise=expertise,
                 experience_level=experience_level,
                 ing_entity=ing_entity,

@@ -164,7 +164,89 @@ job-parser/
 - `lxml` - Fast HTML parser
 - `pandas` - Data manipulation and export
 - `tqdm` - Progress bars
+## Running the Project
 
+### Quick Start Commands
+
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
+
+# 2. Basic job scraping (sequential) - gets all job listings
+python main.py --output jobs.json
+
+# 3. With full details (sequential, slower)
+python main.py --output jobs.json --details
+
+# 4. Limit pages for testing
+python main.py --output jobs.json --max-pages 5
+```
+
+### Parallel Processing (Recommended for Large-Scale Scraping)
+
+The `parse_job_details.py` script provides **parallel scraping** using ThreadPoolExecutor:
+
+```bash
+# Step 1: Get basic job listings first
+python main.py --output jobs.json
+
+# Step 2: Parse details in parallel (10 workers by default)
+python parse_job_details.py --input jobs.json --output-dir jobs_detailed
+
+# Step 3: Customize parallelism
+python parse_job_details.py --input jobs.json --output-dir jobs_detailed --workers 20
+
+# Resume interrupted processing (skip already processed jobs)
+python parse_job_details.py --input jobs.json --output-dir jobs_detailed --resume
+
+# Limit number of jobs to process
+python parse_job_details.py --input jobs.json --output-dir jobs_detailed --limit 100
+```
+
+### Parallel Processing Options
+
+| Option | Description |
+|--------|-------------|
+| `--input, -i` | Input JSON file with job listings (default: jobs.json) |
+| `--output-dir, -o` | Output directory for individual job files (default: jobs_detailed) |
+| `--workers, -w` | Number of parallel workers (default: 10) |
+| `--limit` | Limit number of jobs to process |
+| `--resume` | Skip already processed jobs |
+| `--delay` | Delay between requests (ignored in parallel mode) |
+
+### Common Workflows
+
+```bash
+# Full workflow: scrape all jobs with parallel detail fetching
+python main.py --output jobs.json && python parse_job_details.py -i jobs.json -o jobs_detailed -w 10
+
+# Filter jobs first, then get details
+python main.py --output poland_jobs.json --country Poland
+python parse_job_details.py -i poland_jobs.json -o poland_detailed -w 5
+
+# Export to different formats
+python main.py --output jobs.csv   # CSV format
+python main.py --output jobs.xlsx  # Excel format
+```
 ## License
 
 MIT License
+
+# Parse first 5 pages of listings (each page has ~20 jobs)
+python main.py --output jobs.json --max-pages 5
+
+# Parse ALL listings (no page limit)
+python main.py --output jobs.json --max-pages 0
+
+# Fetch details for all jobs with 10 parallel workers
+python parse_job_details.py -i jobs.json -o jobs_detailed -w 10
+
+# Fetch details with 20 parallel workers (faster)
+python parse_job_details.py -i jobs.json -o jobs_detailed -w 20
+
+# Full workflow: scrape all listings + fetch all details
+python main.py --output jobs.json --max-pages 0 && python parse_job_details.py -i jobs.json -o jobs_detailed -w 15
+
+# Limit to specific number of jobs for testing
+python main.py --output jobs.json --max-pages 2  # ~40 jobs
+python parse_job_details.py -i jobs.json -o jobs_detailed -w 10

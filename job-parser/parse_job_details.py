@@ -34,6 +34,16 @@ class DetailedJob:
     title: str
     url: str
     
+    # Listing info (from job listings page)
+    listing_title: Optional[str] = None
+    listing_city: Optional[str] = None
+    listing_country: Optional[str] = None
+    listing_locations: List[str] = field(default_factory=list)
+    listing_locations_raw: Optional[str] = None  # Raw string like "Polska, Katowice; Polska, Warszawa;"
+    listing_expertise: Optional[str] = None
+    listing_experience_level: Optional[str] = None
+    listing_ing_entity: Optional[str] = None
+    
     # Reference/posting info
     reference_number: Optional[str] = None
     posted_date: Optional[str] = None
@@ -244,24 +254,87 @@ class DetailedJobParser:
             "salary_period": None,
         }
         
-        # Pattern for salary like €7.499,31 - €11.925,90
-        salary_pattern = r"([€$£])\s*([\d.,]+)\s*[-–]\s*([€$£])?\s*([\d.,]+)"
-        match = re.search(salary_pattern, text)
+        def parse_number(num_str: str) -> float:
+            """Parse number with various formats (spaces, commas, dots as separators)."""
+            # Remove spaces (used as thousands separator in Polish: 12 500)
+            num_str = num_str.replace(" ", "").replace("\u00a0", "")  # regular and non-breaking space
+            
+            # Handle European format (1.234,56) vs US format (1,234.56)
+            if "," in num_str and "." in num_str:
+                # Check which comes last - that's the decimal separator
+                if num_str.rfind(",") > num_str.rfind("."):
+                    # European: 1.234,56 -> 1234.56
+                    num_str = num_str.replace(".", "").replace(",", ".")
+                else:
+                    # US: 1,234.56 -> 1234.56
+                    num_str = num_str.replace(",", "")
+            elif "," in num_str:
+                # Could be European decimal (123,45) or thousands (1,234)
+                # If exactly 2 digits after comma, treat as decimal
+                parts = num_str.split(",")
+                if len(parts) == 2 and len(parts[1]) == 2:
+                    num_str = num_str.replace(",", ".")
+                else:
+                    num_str = num_str.replace(",", "")
+            elif "." in num_str:
+                # Could be decimal or thousands separator
+                parts = num_str.split(".")
+                if len(parts) == 2 and len(parts[1]) == 2:
+                    pass  # Already decimal format
+                else:
+                    num_str = num_str.replace(".", "")
+            
+            return float(num_str)
         
+        # Currency mapping
+        currency_map = {
+            "€": "EUR", "$": "USD", "£": "GBP", 
+            "zł": "PLN", "zl": "PLN", "PLN": "PLN",
+            "RON": "RON", "HUF": "HUF", "CZK": "CZK"
+        }
+        
+        # Pattern 1: Currency symbol at start (€7.499,31 - €11.925,90)
+        pattern1 = r"([€$£])\s*([\d\s.,]+)\s*[-–]\s*([€$£])?\s*([\d\s.,]+)"
+        
+        # Pattern 2: Polish format with currency at end (12 500 - 20 000 zł brutto)
+        # Also handles: Wynagrodzenie: 12 500 - 20 000 zł
+        pattern2 = r"(?:wynagrodzenie[:\s]*)?(\d[\d\s.,]*)\s*[-–]\s*(\d[\d\s.,]*)\s*(zł|zl|PLN|RON|HUF|CZK)(?:\s*(?:brutto|netto|gross|net))?"
+        
+        # Pattern 3: Single value with currency (15 000 zł)
+        pattern3 = r"(\d[\d\s.,]+)\s*(zł|zl|PLN|€|\$|£)"
+        
+        # Try pattern 2 first (Polish format - most specific)
+        match = re.search(pattern2, text, re.IGNORECASE)
         if match:
-            currency_symbol = match.group(1)
-            min_val = match.group(2).replace(".", "").replace(",", ".")
-            max_val = match.group(4).replace(".", "").replace(",", ".")
-            
-            result["salary_range"] = match.group(0)
-            result["salary_currency"] = {"€": "EUR", "$": "USD", "£": "GBP"}.get(currency_symbol, currency_symbol)
-            
             try:
-                result["salary_min"] = float(min_val)
-                result["salary_max"] = float(max_val)
-                # Assume monthly if values are in thousands
-                result["salary_period"] = "monthly" if result["salary_max"] < 50000 else "yearly"
-            except ValueError:
+                min_val = parse_number(match.group(1))
+                max_val = parse_number(match.group(2))
+                currency = match.group(3)
+                
+                result["salary_range"] = match.group(0).strip()
+                result["salary_currency"] = currency_map.get(currency.lower(), currency.upper())
+                result["salary_min"] = min_val
+                result["salary_max"] = max_val
+                result["salary_period"] = "monthly" if max_val < 50000 else "yearly"
+                return result
+            except (ValueError, AttributeError):
+                pass
+        
+        # Try pattern 1 (currency at start)
+        match = re.search(pattern1, text)
+        if match:
+            try:
+                currency_symbol = match.group(1)
+                min_val = parse_number(match.group(2))
+                max_val = parse_number(match.group(4))
+                
+                result["salary_range"] = match.group(0).strip()
+                result["salary_currency"] = currency_map.get(currency_symbol, currency_symbol)
+                result["salary_min"] = min_val
+                result["salary_max"] = max_val
+                result["salary_period"] = "monthly" if max_val < 50000 else "yearly"
+                return result
+            except (ValueError, AttributeError):
                 pass
         
         return result
@@ -292,9 +365,17 @@ class DetailedJobParser:
             url=url,
         )
         
-        # Copy basic info if provided
+        # Copy all listing info from basic_info (from the listings page)
         if basic_info:
             job.job_id = basic_info.get("job_id", job_id)
+            job.listing_title = basic_info.get("title")
+            job.listing_city = basic_info.get("city")
+            job.listing_country = basic_info.get("country")
+            job.listing_locations = basic_info.get("locations", [])
+            job.listing_locations_raw = basic_info.get("locations_raw")
+            job.listing_expertise = basic_info.get("expertise")
+            job.listing_experience_level = basic_info.get("experience_level")
+            job.listing_ing_entity = basic_info.get("ing_entity")
         
         try:
             # Extract title from h1
@@ -383,19 +464,24 @@ class DetailedJobParser:
             elif "ING Bank" in page_text:
                 job.ing_entity = "ING Bank"
             
-            # Employment type
-            if "umowa o pracę" in page_text.lower():
+            # Employment type - check in title or specific context, not entire page
+            # (page contains boilerplate about internship programmes causing false positives)
+            job_title_lower = job.title.lower() if job.title else ""
+            listing_title_lower = (job.listing_title or "").lower()
+            
+            # Only the first ~500 chars contains actual job info, rest is boilerplate
+            job_context = page_text[:2000].lower()
+            
+            if "umowa o pracę" in job_context or "employment contract" in job_context:
                 job.employment_type = "Employment contract"
-            elif "employment contract" in page_text.lower():
-                job.employment_type = "Employment contract"
-            elif "b2b" in page_text.lower():
+            elif "b2b" in job_context:
                 job.employment_type = "B2B"
-            elif "internship" in page_text.lower() and "not mandatory" not in page_text.lower():
+            elif "intern" in job_title_lower or "intern" in listing_title_lower or "staż" in job_title_lower or "stażyst" in job_title_lower:
                 job.employment_type = "Internship"
-            elif "staż" in page_text.lower():
-                job.employment_type = "Internship"
+            elif "part-time" in job_context or "part time" in job_context:
+                job.employment_type = "Part-time"
             else:
-                job.employment_type = "Full-time"  # Default
+                job.employment_type = "Full-time"  # Default for ING jobs
             
             # Work model
             if "hybrid" in page_text.lower() or "hybrydow" in page_text.lower():
@@ -491,6 +577,20 @@ class DetailedJobParser:
                     if "@ing" in email:
                         job.contact_email = email
                         break
+            
+            # Fallback to listing info if detail page parsing didn't find these fields
+            if not job.location_city and job.listing_city:
+                job.location_city = job.listing_city
+            if not job.location_country and job.listing_country:
+                job.location_country = job.listing_country
+            if not job.location_primary and (job.listing_city or job.listing_country):
+                job.location_primary = f"{job.listing_city or ''}, {job.listing_country or ''}".strip(", ")
+            if not job.expertise and job.listing_expertise:
+                job.expertise = job.listing_expertise
+            if not job.ing_entity and job.listing_ing_entity:
+                job.ing_entity = job.listing_ing_entity
+            if not job.experience_level and job.listing_experience_level:
+                job.experience_level = job.listing_experience_level
             
         except Exception as e:
             logger.error(f"Error parsing job page {url}: {e}")
