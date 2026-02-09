@@ -1,0 +1,30 @@
+### Test Vertex AI Connection
+GET http://localhost:8080/test-vertex-ai-connection
+Accept: application/json
+
+###
+
+### List Available Models from GCP Vertex AI
+GET http://localhost:8080/list-models
+Accept: application/json
+
+###
+
+### Test Scoring Agent (simple test)
+GET http://localhost:8080/scoring-agent/test
+Accept: application/json
+
+###
+
+### Scoring Agent - Score CV against Jobs
+POST http://localhost:8080/scoring-agent
+Content-Type: application/json
+Accept: application/json
+
+{
+  "cv": "John Doe\nSoftware Engineer with 5 years experience\nSkills: Java, Spring Boot, Python, AWS, Docker\nEducation: BS Computer Science",
+  "jobs": "Job 1: Senior Java Developer - Required: Java, Spring, Microservices, 5+ years experience\nJob 2: Python Developer - Required: Python, Django, Machine Learning, 3+ years experience"
+}
+
+###
+

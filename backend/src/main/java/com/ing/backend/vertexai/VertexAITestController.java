@@ -1,56 +1,89 @@
 package com.ing.backend.vertexai;
 
-
-import com.google.cloud.aiplatform.v1.EndpointServiceClient;
-import com.google.cloud.aiplatform.v1.EndpointServiceSettings;
-import com.google.cloud.aiplatform.v1.LocationName;
-import com.google.cloud.aiplatform.v1.Endpoint;
-import org.springframework.web.bind.annotation.GetMapping;
+import com.google.cloud.vertexai.VertexAI;
+import com.google.cloud.vertexai.generativeai.GenerativeModel;
+import com.google.cloud.vertexai.api.GenerateContentResponse;
+import com.google.cloud.vertexai.generativeai.ResponseHandler;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 public class VertexAITestController {
 
     private final String projectId = "ai-deniers-486907";
-    private final String location = "us-central1";
+    private final String location = "europe-west4";
 
-    @GetMapping("/test-vertex-ai-connection")
-    public ResponseEntity<String> testVertexAIConnection() {
-        try {
-            EndpointServiceSettings endpointServiceSettings = EndpointServiceSettings.newBuilder()
-                    .setEndpoint(location + "-aiplatform.googleapis.com:443")
+    @PostMapping("/scoring-agent")
+    public ResponseEntity<Map<String, Object>> scoringAgent(@RequestBody ScoringRequest request) {
+        final String agentName = "Scoring_model";
+        final String modelName = "gemini-2.5-flash";
+        final String agentDescription = "Agent to help give a score given a parsed CV as an input and a list of jobs with full descriptions.";
+        final String instruction = """
+            You are a CV scoring agent. Your task is to analyze a parsed CV and compare it against job descriptions.
+            For each job, provide a compatibility score from 0-100 and explain your reasoning.
+            
+            Consider the following factors:
+            - Skills match
+            - Experience relevance
+            - Education requirements
+            - Keywords alignment
+            
+            Provide your response in JSON format with scores and explanations for each job.
+            """;
+
+        try (VertexAI vertexAI = new VertexAI(projectId, location)) {
+            GenerativeModel model = new GenerativeModel.Builder()
+                    .setModelName(modelName)
+                    .setVertexAi(vertexAI)
                     .build();
 
-            try (EndpointServiceClient client = EndpointServiceClient.create(endpointServiceSettings)) {
-                LocationName parent = LocationName.of(projectId, location);
+            // Build the prompt combining instruction, CV, and jobs
+            String prompt = String.format("""
+                %s
+                
+                ## Parsed CV:
+                %s
+                
+                ## Job Descriptions:
+                %s
+                
+                Please score the CV against each job and provide detailed feedback.
+                """, instruction, request.getCv(), request.getJobs());
 
-                List<String> endpointNames = new ArrayList<>();
-                // Try to list endpoints. This will test authentication and API access.
-                // Even if you have no endpoints, the call should succeed without an authentication error.
-                for (Endpoint endpoint : client.listEndpoints(parent).iterateAll()) {
-                    endpointNames.add(endpoint.getDisplayName());
-                }
+            GenerateContentResponse response = model.generateContent(prompt);
+            String responseText = ResponseHandler.getText(response);
 
-                if (endpointNames.isEmpty()) {
-                    return ResponseEntity.ok("Successfully connected to Vertex AI and found no deployed endpoints in region " + location + " for project " + projectId + ". This indicates basic API access is working.");
-                } else {
-                    return ResponseEntity.ok("Successfully connected to Vertex AI and found deployed endpoints: " + String.join(", ", endpointNames) + " in region " + location + " for project " + projectId + ". This indicates basic API access is working.");
-                }
+            Map<String, Object> result = new HashMap<>();
+            result.put("agentName", agentName);
+            result.put("model", modelName);
+            result.put("description", agentDescription);
+            result.put("response", responseText);
 
-            }
-        } catch (IOException e) {
-            // This could be due to network issues or credential problems.
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Error communicating with Vertex AI. Check network and GOOGLE_APPLICATION_CREDENTIALS: " + e.getMessage());
+            return ResponseEntity.ok(result);
+
         } catch (Exception e) {
-            // Catch any other unexpected errors, potentially related to permissions.
             e.printStackTrace();
-            return ResponseEntity.status(500).body("An unexpected error occurred while testing Vertex AI connection: " + e.getMessage());
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Error running scoring agent: " + e.getMessage());
+            return ResponseEntity.status(500).body(error);
         }
+    }
+
+    /**
+     * Request DTO for the scoring agent
+     */
+    public static class ScoringRequest {
+        private String cv;
+        private String jobs;
+
+        public String getCv() { return cv; }
+        public void setCv(String cv) { this.cv = cv; }
+        public String getJobs() { return jobs; }
+        public void setJobs(String jobs) { this.jobs = jobs; }
     }
 }
 

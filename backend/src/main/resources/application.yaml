@@ -1,8 +1,0 @@
-spring:
-  application:
-    name: backend
-  ai:
-    google:
-      genai:
-        project-id: "ai-deniers-486907"
-        location: "us-central1"
