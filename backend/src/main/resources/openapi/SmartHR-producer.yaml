@@ -1,0 +1,147 @@
+openapi: 3.0.3
+info:
+  title: Smart HR Backend
+  description: Backend endpoints for Smart HR suite
+  version: 1.0.0
+servers:
+  - url: 'https://api.ing.com'
+paths:
+  /v1/smart-hr/cv/upload:
+    post:
+      operationId: resumeUpload
+      tags:
+        - ResumeUpload
+      description: Upload a resume for job matching
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                requestId:
+                  type: string
+                  format: uuid
+                document:
+                  type: string
+                  format: binary
+                jobId:
+                  type: string
+              required:
+                - requestId
+                - document
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CVUploadResponse'
+        400:
+          $ref: '#/components/responses/400'
+        401:
+          $ref: '#/components/responses/401'
+        403:
+          $ref: '#/components/responses/403'
+        404:
+          $ref: '#/components/responses/404'
+        500:
+          $ref: '#/components/responses/500'
+        502:
+          $ref: '#/components/responses/502'
+        503:
+          $ref: '#/components/responses/503'
+components:
+  responses:
+    400:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    401:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    403:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    404:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    500:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    502:
+      description: Bad Gateway
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    503:
+      description: Service Unavailable
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    ErrorModel:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          description: The same value as with the HTTP status code, for easier handling
+        errorCode:
+          type: string
+          description: Code describing the error for machine handling purposes
+        errorMessage:
+          type: string
+          description: Message describing the error intended for human reading
+    InnerErrors:
+      type: array
+      items:
+        $ref: '#/components/schemas/ErrorResponse'
+    InnerErrorsHolder:
+      type: object
+      properties:
+        innerErrors:
+          $ref: '#/components/schemas/InnerErrors'
+    ErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ErrorModel'
+        - $ref: '#/components/schemas/InnerErrorsHolder'
+    CVUploadResponse:
+      type: object
+      properties:
+        matchData:
+          type: array
+          items:
+            $ref: '#/components/schemas/CVMatch'
+    CVMatch:
+      type: object
+      properties:
+        job:
+          $ref: '#/components/schemas/JobDetails'
+        score:
+          type: number
+    JobDetails:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
